@@ -101,23 +101,31 @@ def wiki_search(topic: str, max_results: int = 5) -> dict:
       - topic (str): Canonical page title or concise entity/topic.
     """
     max_results = max(1, min(max_results, 10))
-    wiki = WikipediaLoader(query=topic, load_max_docs=max_results)
-    raw = wiki.load()
+    
+    try:
+        wiki = WikipediaLoader(query=topic, load_max_docs=max_results)
+        raw = wiki.load()
 
-    results = [
-      {
-        "title": doc.metadata["title"],
-        "summary": doc.metadata["summary"],
-        "source": doc.metadata["source"]
-      }
-      for doc in raw
-    ]
+        if not raw:
+            return {"results": [], "error": "No results found"}
 
-    return {"results": results}
+        results = [
+          {
+            "title": doc.metadata.get("title", "Unknown"),
+            "summary": doc.metadata.get("summary", doc.page_content[:500] if doc.page_content else "No summary available"),
+            "source": doc.metadata.get("source", "")
+          }
+          for doc in raw
+        ]
+
+        return {"results": results}
+    
+    except Exception as e:
+        return {"results": [], "error": f"Error performing Wikipedia search: {str(e)}"}
 
 
 @tool("lookup_stock")
-def lookup_stock_symbol(company_name: str) -> str:
+def lookup_stock_symbol(company_name: str) -> dict:
     """
     Converts a company name to its stock symbol using a financial API.
 
@@ -125,45 +133,45 @@ def lookup_stock_symbol(company_name: str) -> str:
         company_name (str): The full company name (e.g., 'Tesla').
 
     Returns:
-        str: The stock symbol (e.g., 'TSLA') or an error message.
+        dict: {"symbol": str, "name": str} or {"error": str}
     """
     # Try simple mapping first for common companies
     try:
         # Common company mappings
         company_mappings = {
-            "tesla": "TSLA",
-            "apple": "AAPL", 
-            "microsoft": "MSFT",
-            "microsoft corporation": "MSFT",
-            "nvidia": "NVDA",
-            "google": "GOOGL",
-            "alphabet": "GOOGL",
-            "amazon": "AMZN",
-            "meta": "META",
-            "facebook": "META",
-            "netflix": "NFLX",
-            "openai": "MSFT",  # OpenAI is closely tied to Microsoft
-            "anthropic": "GOOGL",  # Anthropic has Google investment
+            "tesla": ("TSLA", "Tesla, Inc."),
+            "apple": ("AAPL", "Apple Inc."), 
+            "microsoft": ("MSFT", "Microsoft Corporation"),
+            "microsoft corporation": ("MSFT", "Microsoft Corporation"),
+            "nvidia": ("NVDA", "NVIDIA Corporation"),
+            "google": ("GOOGL", "Alphabet Inc."),
+            "alphabet": ("GOOGL", "Alphabet Inc."),
+            "amazon": ("AMZN", "Amazon.com, Inc."),
+            "meta": ("META", "Meta Platforms, Inc."),
+            "facebook": ("META", "Meta Platforms, Inc."),
+            "netflix": ("NFLX", "Netflix, Inc."),
+            "openai": ("MSFT", "Microsoft Corporation"),  # OpenAI is closely tied to Microsoft
+            "anthropic": ("GOOGL", "Alphabet Inc."),  # Anthropic has Google investment
         }
         
         company_lower = company_name.lower()
-        for key, symbol in company_mappings.items():
+        for key, (symbol, name) in company_mappings.items():
             if key in company_lower:
-                return symbol
+                return {"symbol": symbol, "name": name}
         
         # If no mapping found, try AlphaVantage API
         return _lookup_symbol_api(company_name)
         
     except Exception as e:
-        return f"Error looking up symbol for {company_name}: {str(e)}"
+        return {"error": f"Error looking up symbol for {company_name}: {str(e)}"}
 
 
-def _lookup_symbol_api(company_name: str) -> str:
+def _lookup_symbol_api(company_name: str) -> dict:
     """Helper function to lookup symbol using AlphaVantage API."""
     # Use AlphaVantage API for stock symbol lookup
     api_key = os.getenv("ALPHAVANTAGE_API_KEY")
     if not api_key:
-        return f"Symbol lookup for {company_name} requires additional research."
+        return {"error": f"Symbol lookup for {company_name} requires additional research."}
     
     api_url = "https://www.alphavantage.co/query"
     params = {
@@ -178,13 +186,17 @@ def _lookup_symbol_api(company_name: str) -> str:
         data = response.json()
         
         if "bestMatches" in data and data["bestMatches"]:
-            return data["bestMatches"][0]["1. symbol"]
+            best_match = data["bestMatches"][0]
+            return {
+                "symbol": best_match["1. symbol"],
+                "name": best_match["2. name"]
+            }
         else:
-            return f"Symbol not found for {company_name}."
+            return {"error": f"Symbol not found for {company_name}."}
     except requests.exceptions.RequestException as e:
-        return f"Error connecting to AlphaVantage API: {str(e)}"
+        return {"error": f"Error connecting to AlphaVantage API: {str(e)}"}
     except Exception as e:
-        return f"Error looking up symbol for {company_name}: {str(e)}"
+        return {"error": f"Error looking up symbol for {company_name}: {str(e)}"}
 
 @tool("fetch_stock_data")
 def fetch_stock_data_raw(stock_symbol: str) -> dict:

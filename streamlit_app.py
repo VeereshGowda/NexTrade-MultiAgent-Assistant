@@ -1,5 +1,9 @@
 """
 Streamlit Multi-Agent Supervisor System with Portfolio-Based Trading.
+
+This app can run in two modes:
+1. Direct Mode: Directly uses the multi-agent supervisor (default)
+2. API Mode: Consumes FastAPI endpoints (when API is running)
 """
 
 import streamlit as st
@@ -9,6 +13,8 @@ import uuid
 from datetime import datetime
 import base64
 from io import BytesIO
+import requests
+from typing import Optional, Dict, Any
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -23,6 +29,107 @@ from agent.graph import (
 )
 from agent.context import get_default_config
 from agent.utils import print_messages, save_graph_image, get_graph_image_bytes
+
+# API Configuration
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+
+
+def check_api_availability() -> bool:
+    """Check if FastAPI backend is available."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/health", timeout=2)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+
+def process_message_via_api(prompt: str, user_id: str, thread_id: str) -> Dict[str, Any]:
+    """Process message through FastAPI backend."""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/chat",
+            json={
+                "message": prompt,
+                "user_id": user_id,
+                "thread_id": thread_id
+            },
+            timeout=60
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if data.get("requires_approval", False):
+                return {
+                    "type": "approval_needed",
+                    "approval_details": data["approval_details"],
+                    "thread_id": data["thread_id"]
+                }
+            else:
+                return {
+                    "type": "success",
+                    "content": data["response"]
+                }
+        else:
+            return {
+                "type": "error",
+                "error": f"API returned status code {response.status_code}",
+                "error_type": "APIError"
+            }
+    
+    except requests.exceptions.Timeout:
+        return {
+            "type": "error",
+            "error": "Request timed out",
+            "error_type": "TimeoutError",
+            "troubleshooting": "The API request took too long. Try again or switch to Direct Mode."
+        }
+    except requests.exceptions.ConnectionError:
+        return {
+            "type": "error",
+            "error": "Cannot connect to API",
+            "error_type": "ConnectionError",
+            "troubleshooting": "Make sure the FastAPI server is running: uvicorn src.api:app --reload"
+        }
+    except Exception as e:
+        return {
+            "type": "error",
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+
+
+def approve_action_via_api(thread_id: str, approved: bool, user_id: str) -> Dict[str, Any]:
+    """Send approval decision through FastAPI backend."""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/approve",
+            json={
+                "thread_id": thread_id,
+                "approved": approved,
+                "user_id": user_id
+            },
+            timeout=60
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                "type": "success",
+                "content": data["response"]
+            }
+        else:
+            return {
+                "type": "error",
+                "error": f"API returned status code {response.status_code}"
+            }
+    
+    except Exception as e:
+        return {
+            "type": "error",
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
 
 
 def process_message(supervisor, prompt, user_id, thread_id):
@@ -128,20 +235,43 @@ def main():
     with st.sidebar:
         st.header("⚙️ Configuration")
         
-        # Implementation type
-        use_highlevel = st.radio(
-            "Implementation Type:",
-            ["Custom Graph", "High-level API"],
-            index=0
-        ) == "High-level API"
+        # Check API availability
+        api_available = check_api_availability()
         
-        # Model provider selection
-        use_azure = st.radio(
-            "Model Provider:",
-            ["Azure OpenAI (Recommended)", "Groq"],
+        # Deployment mode selection
+        use_api_mode = st.radio(
+            "Deployment Mode:",
+            ["Direct Mode (Local)", "API Mode (FastAPI Backend)"],
             index=0,
-            help="Azure OpenAI matches the notebook configuration and should work better"
-        ) == "Azure OpenAI (Recommended)"
+            help="Direct Mode uses the supervisor directly. API Mode requires FastAPI server running."
+        ) == "API Mode (FastAPI Backend)"
+        
+        # Show API status
+        if use_api_mode:
+            if api_available:
+                st.success("✅ API Server Connected")
+            else:
+                st.error("❌ API Server Not Available")
+                st.info("Start the API server with:\n```\nuvicorn src.api:app --reload\n```")
+        
+        # Implementation type (only for direct mode)
+        use_highlevel = False
+        if not use_api_mode:
+            use_highlevel = st.radio(
+                "Implementation Type:",
+                ["Custom Graph", "High-level API"],
+                index=0
+            ) == "High-level API"
+        
+        # Model provider selection (only for direct mode)
+        use_azure = True
+        if not use_api_mode:
+            use_azure = st.radio(
+                "Model Provider:",
+                ["Azure OpenAI (Recommended)", "Groq"],
+                index=0,
+                help="Azure OpenAI matches the notebook configuration and should work better"
+            ) == "Azure OpenAI (Recommended)"
         
         # User ID for session
         user_id = st.text_input("User ID:", value="streamlit_user")
@@ -197,25 +327,38 @@ def main():
         st.session_state.thread_id = str(uuid.uuid4())
     if "pending_approval" not in st.session_state:
         st.session_state.pending_approval = None
-    if "supervisor" not in st.session_state or "current_config" not in st.session_state or \
-       st.session_state.current_config != (use_highlevel, use_azure):
-        with st.spinner("🚀 Initializing NexTrade Multi-Agent System..."):
-            try:
-                st.session_state.supervisor = create_financial_advisor_system(
-                    use_highlevel=use_highlevel,
-                    use_azure=use_azure
-                )
-                st.session_state.current_config = (use_highlevel, use_azure)
-                model_info = "Azure OpenAI" if use_azure else "Groq"
-                impl_info = "High-level API" if use_highlevel else "Custom Graph"
-                st.success(f"✅ NexTrade Multi-Agent System initialized successfully! Using {model_info} with {impl_info}")
-                
-                # Display current configuration for debugging
-                st.info(f"🔧 Configuration: {model_info} + {impl_info}")
-            except Exception as e:
-                st.error(f"❌ Error initializing system: {e}")
-                st.error("Please check your API keys in the .env file")
-                return
+    if "use_api_mode" not in st.session_state:
+        st.session_state.use_api_mode = use_api_mode
+    
+    # Initialize supervisor only in Direct Mode
+    if not use_api_mode:
+        if "supervisor" not in st.session_state or "current_config" not in st.session_state or \
+           st.session_state.current_config != (use_highlevel, use_azure):
+            with st.spinner("🚀 Initializing NexTrade Multi-Agent System..."):
+                try:
+                    st.session_state.supervisor = create_financial_advisor_system(
+                        use_highlevel=use_highlevel,
+                        use_azure=use_azure
+                    )
+                    st.session_state.current_config = (use_highlevel, use_azure)
+                    model_info = "Azure OpenAI" if use_azure else "Groq"
+                    impl_info = "High-level API" if use_highlevel else "Custom Graph"
+                    st.success(f"✅ NexTrade Multi-Agent System initialized successfully! Using {model_info} with {impl_info}")
+                    
+                    # Display current configuration for debugging
+                    st.info(f"🔧 Configuration: {model_info} + {impl_info}")
+                except Exception as e:
+                    st.error(f"❌ Error initializing system: {e}")
+                    st.error("Please check your API keys in the .env file")
+                    return
+    else:
+        # API Mode - check if API is available
+        if not api_available:
+            st.error("❌ Cannot use API Mode - FastAPI server is not running")
+            st.info("Please start the API server or switch to Direct Mode")
+            return
+        st.success("✅ Using FastAPI Backend")
+        st.session_state.supervisor = None  # Not needed in API mode
     
     # Store user_id in session state for easier access
     if "user_id" not in st.session_state:
@@ -247,29 +390,55 @@ def main():
                 if st.button("✅ Approve Trade", use_container_width=True):
                     with st.spinner("Processing approval..."):
                         try:
-                            # Resume with approval
-                            from langgraph.types import Command
-                            approved_response = st.session_state.supervisor.invoke(
-                                Command(resume={"approved": True}), 
-                                config=approval_data["config"]
-                            )
-                            
-                            # Extract response
-                            final_message = approved_response['messages'][-1]
-                            response_content = final_message.content
-                            
-                            st.success("✅ Trade approved and executed!")
-                            st.markdown(response_content)
-                            
-                            # Add assistant message
-                            st.session_state.messages.append({
-                                "role": "assistant", 
-                                "content": response_content
-                            })
-                            
-                            # Clear pending approval
-                            del st.session_state.pending_approval
-                            st.rerun()
+                            # Check if we're in API mode
+                            if use_api_mode:
+                                # Use API endpoint
+                                result = approve_action_via_api(
+                                    approval_data["thread_id"],
+                                    True,
+                                    st.session_state.user_id
+                                )
+                                
+                                if result["type"] == "success":
+                                    response_content = result["content"]
+                                    st.success("✅ Trade approved and executed!")
+                                    st.markdown(response_content)
+                                    
+                                    # Add assistant message
+                                    st.session_state.messages.append({
+                                        "role": "assistant",
+                                        "content": response_content
+                                    })
+                                    
+                                    # Clear pending approval
+                                    del st.session_state.pending_approval
+                                    st.rerun()
+                                else:
+                                    st.error(f"Error processing approval: {result['error']}")
+                            else:
+                                # Direct mode - Resume with approval
+                                from langgraph.types import Command
+                                approved_response = st.session_state.supervisor.invoke(
+                                    Command(resume={"approved": True}), 
+                                    config=approval_data["config"]
+                                )
+                                
+                                # Extract response
+                                final_message = approved_response['messages'][-1]
+                                response_content = final_message.content
+                                
+                                st.success("✅ Trade approved and executed!")
+                                st.markdown(response_content)
+                                
+                                # Add assistant message
+                                st.session_state.messages.append({
+                                    "role": "assistant", 
+                                    "content": response_content
+                                })
+                                
+                                # Clear pending approval
+                                del st.session_state.pending_approval
+                                st.rerun()
                             
                         except Exception as e:
                             st.error(f"Error processing approval: {e}")
@@ -278,29 +447,55 @@ def main():
                 if st.button("❌ Reject Trade", use_container_width=True):
                     with st.spinner("Processing rejection..."):
                         try:
-                            # Resume with rejection
-                            from langgraph.types import Command
-                            rejected_response = st.session_state.supervisor.invoke(
-                                Command(resume={"approved": False}), 
-                                config=approval_data["config"]
-                            )
-                            
-                            # Extract response
-                            final_message = rejected_response['messages'][-1]
-                            response_content = final_message.content
-                            
-                            st.info("❌ Trade rejected by user")
-                            st.markdown(response_content)
-                            
-                            # Add assistant message
-                            st.session_state.messages.append({
-                                "role": "assistant", 
-                                "content": response_content
-                            })
-                            
-                            # Clear pending approval
-                            del st.session_state.pending_approval
-                            st.rerun()
+                            # Check if we're in API mode
+                            if use_api_mode:
+                                # Use API endpoint
+                                result = approve_action_via_api(
+                                    approval_data["thread_id"],
+                                    False,
+                                    st.session_state.user_id
+                                )
+                                
+                                if result["type"] == "success":
+                                    response_content = result["content"]
+                                    st.info("❌ Trade rejected by user")
+                                    st.markdown(response_content)
+                                    
+                                    # Add assistant message
+                                    st.session_state.messages.append({
+                                        "role": "assistant",
+                                        "content": response_content
+                                    })
+                                    
+                                    # Clear pending approval
+                                    del st.session_state.pending_approval
+                                    st.rerun()
+                                else:
+                                    st.error(f"Error processing rejection: {result['error']}")
+                            else:
+                                # Direct mode - Resume with rejection
+                                from langgraph.types import Command
+                                rejected_response = st.session_state.supervisor.invoke(
+                                    Command(resume={"approved": False}), 
+                                    config=approval_data["config"]
+                                )
+                                
+                                # Extract response
+                                final_message = rejected_response['messages'][-1]
+                                response_content = final_message.content
+                                
+                                st.info("❌ Trade rejected by user")
+                                st.markdown(response_content)
+                                
+                                # Add assistant message
+                                st.session_state.messages.append({
+                                    "role": "assistant", 
+                                    "content": response_content
+                                })
+                                
+                                # Clear pending approval
+                                del st.session_state.pending_approval
+                                st.rerun()
                             
                         except Exception as e:
                             st.error(f"Error processing rejection: {e}")
@@ -317,48 +512,85 @@ def main():
                 with st.chat_message("assistant"):
                     with st.spinner("🤖 Processing..."):
                         try:
-                            # Create configuration
-                            config = {
-                                "configurable": {
-                                    "thread_id": st.session_state.thread_id,
-                                    "user_id": st.session_state.user_id
-                                }
-                            }
-                            
-                            # Get response from supervisor
-                            response = st.session_state.supervisor.invoke({
-                                "messages": [HumanMessage(content=prompt)]
-                            }, config)
-                            
-                            # Check for interrupt (HITL approval needed)
-                            if "__interrupt__" in response:
-                                interrupts = response["__interrupt__"]
-                                if interrupts:
-                                    interrupt_data = interrupts[0].value
-                                    
-                                    # Store approval data in session state
+                            if use_api_mode:
+                                # Use API endpoint
+                                result = process_message_via_api(
+                                    prompt,
+                                    st.session_state.user_id,
+                                    st.session_state.thread_id
+                                )
+                                
+                                if result["type"] == "success":
+                                    response_content = result["content"]
+                                    st.markdown(response_content)
+                                    st.session_state.messages.append({
+                                        "role": "assistant",
+                                        "content": response_content
+                                    })
+                                elif result["type"] == "approval_needed":
+                                    # Store approval data
                                     st.session_state.pending_approval = {
-                                        "approval_details": interrupt_data["approval_details"],
-                                        "config": config
+                                        "approval_details": result["approval_details"],
+                                        "thread_id": result["thread_id"]
                                     }
-                                    
                                     st.warning("🚨 **Human Approval Required**")
-                                    st.info(f"**Trading Action:** {interrupt_data['approval_details']['order_details']}")
+                                    st.info(f"**Trading Action:** {result['approval_details']['order_details']}")
                                     st.info("Please use the approval buttons above to proceed.")
                                     st.rerun()
                                     return
-                            
-                            # Extract the final response (no approval needed)
-                            final_message = response['messages'][-1]
-                            response_content = final_message.content
-                            
-                            st.markdown(response_content)
-                            
-                            # Add assistant message
-                            st.session_state.messages.append({
-                                "role": "assistant", 
-                                "content": response_content
-                            })
+                                else:  # error
+                                    error_msg = f"❌ Error: {result['error']}"
+                                    if "troubleshooting" in result:
+                                        error_msg += f"\n\n💡 {result['troubleshooting']}"
+                                    st.error(error_msg)
+                                    st.session_state.messages.append({
+                                        "role": "assistant",
+                                        "content": error_msg
+                                    })
+                            else:
+                                # Direct mode - use supervisor
+                                # Create configuration
+                                config = {
+                                    "configurable": {
+                                        "thread_id": st.session_state.thread_id,
+                                        "user_id": st.session_state.user_id
+                                    }
+                                }
+                                
+                                # Get response from supervisor
+                                response = st.session_state.supervisor.invoke({
+                                    "messages": [HumanMessage(content=prompt)]
+                                }, config)
+                                
+                                # Check for interrupt (HITL approval needed)
+                                if "__interrupt__" in response:
+                                    interrupts = response["__interrupt__"]
+                                    if interrupts:
+                                        interrupt_data = interrupts[0].value
+                                        
+                                        # Store approval data in session state
+                                        st.session_state.pending_approval = {
+                                            "approval_details": interrupt_data["approval_details"],
+                                            "config": config
+                                        }
+                                        
+                                        st.warning("🚨 **Human Approval Required**")
+                                        st.info(f"**Trading Action:** {interrupt_data['approval_details']['order_details']}")
+                                        st.info("Please use the approval buttons above to proceed.")
+                                        st.rerun()
+                                        return
+                                
+                                # Extract the final response (no approval needed)
+                                final_message = response['messages'][-1]
+                                response_content = final_message.content
+                                
+                                st.markdown(response_content)
+                                
+                                # Add assistant message
+                                st.session_state.messages.append({
+                                    "role": "assistant", 
+                                    "content": response_content
+                                })
                         except Exception as e:
                             error_msg = f"❌ Error generating response: {e}"
                             st.error(error_msg)
