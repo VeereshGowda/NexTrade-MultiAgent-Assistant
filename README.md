@@ -54,12 +54,19 @@ AAIDC-Module2-MultiAgent/
 ├── .env.example                # Environment variables template
 ├── .gitignore                  # Git ignore patterns
 ├── streamlit_app.py            # Web interface application
-├── test_agents.py              # Comprehensive testing suite
-├── test_database_agent.py      # Database-specific tests
-├── test_hitl_complete.py       # Human-in-the-loop tests
-├── test_place_order_hitl.py    # Trading safety tests
 ├── check_setup.py              # Environment verification
 ├── Makefile                    # Build automation
+├── Documentation/              # Supplementary documentation
+│   ├── README.md               # Documentation overview
+│   ├── QUICK_START.md          # 3-minute setup guide
+│   ├── SETUP.md                # Production setup & deployment guide
+│   └── PRODUCTION_READY_SUMMARY.md # Implementation status
+├── demos/                      # Interactive demo scripts
+│   ├── README.md               # Demo documentation
+│   ├── demo_agents.py          # Complete system demo
+│   ├── demo_database_agent.py  # Database operations demo
+│   ├── demo_hitl_complete.py   # HITL mechanism demo
+│   └── demo_place_order_hitl.py # Order placement demo
 ├── src/                        # Main source code
 │   └── agent/                  # Agent implementation
 │       ├── __init__.py         # Package initialization
@@ -88,11 +95,37 @@ AAIDC-Module2-MultiAgent/
     ├── conftest.py             # Test configuration
     ├── integration_tests/      # End-to-end tests
     │   ├── __init__.py
-    │   └── test_graph.py
+    │   ├── test_graph.py       # Agent workflow tests
+    │   ├── test_api.py         # FastAPI endpoint tests
+    │   └── test_multi_agent_system.py
     └── unit_tests/             # Component tests
         ├── __init__.py
-        └── test_configuration.py
+        ├── test_tools.py       # Agent tools tests
+        ├── test_database_tools_comprehensive.py
+        ├── test_guardrails.py  # Safety tests
+        └── ... (10+ test files)
 ```
+
+**Key Directories:**
+- **`src/agent/`** - Core multi-agent system implementation
+- **`tests/`** - Automated pytest test suite (80+ tests)
+- **`demos/`** - Interactive demo scripts for manual testing
+- **`data/`** - SQLite database for order and portfolio storage
+- **`images/`** - System architecture visualizations
+
+**Quick Start Files:**
+- **`streamlit_app.py`** - Launch web UI: `streamlit run streamlit_app.py`
+- **`demos/demo_agents.py`** - Interactive demo: `python demos/demo_agents.py`
+- **`src/api.py`** - FastAPI backend: `uvicorn src.api:app --reload`
+- **`check_setup.py`** - Verify installation: `python check_setup.py`
+
+**Documentation Files:**
+- **`README.md`** - This file (comprehensive guide)
+- **`Documentation/`** - All supplementary documentation
+  - **`QUICK_START.md`** - 3-minute setup guide
+  - **`SETUP.md`** - Production setup and deployment guide
+  - **`PRODUCTION_READY_SUMMARY.md`** - Implementation status
+- **`demos/README.md`** - Demo scripts documentation
 
 ### 1. Clone the Repository
 
@@ -150,29 +183,41 @@ LANGSMITH_API_KEY=your_langsmith_key
 ### 5. Verify Installation
 
 ```bash
-python test_agents.py
+# Run the interactive demo
+python demos/demo_agents.py
+
+# OR run automated pytest tests
+pytest -v
 ```
 
-You should see all 8 tests pass, confirming the system is properly configured.
+The demo provides an interactive testing suite to verify system configuration.
 
 ## Usage
 
 ### Command Line Interface
 
-#### Run the Test Suite
+#### Run Interactive Demos
 ```bash
-# Full automated test suite
-python test_agents.py
+# Complete system demo (recommended)
+python demos/demo_agents.py
 
-# Database-specific tests
-python test_database_agent.py
+# Database operations demo
+python demos/demo_database_agent.py
+
+# Human-in-the-loop mechanism demo
+python demos/demo_hitl_complete.py
+
+# Order placement with HITL demo
+python demos/demo_place_order_hitl.py
 ```
 
-#### Interactive Trading Session
-```bash
-python test_agents.py
-# Select option 2 for interactive mode
-```
+**Demo Features:**
+- Interactive testing with menu options
+- Automated test scenarios
+- Manual query testing
+- HITL approval workflows
+
+See `demos/README.md` for detailed documentation.
 
 ### Web Interface
 
@@ -187,6 +232,43 @@ The web interface provides:
 - Agent visualization capabilities
 - Configuration options for different AI models
 - Sample trading scenarios
+- **Two deployment modes:**
+  - **Direct Mode**: Directly uses the multi-agent supervisor (default)
+  - **API Mode**: Consumes FastAPI backend endpoints (requires API server running)
+
+### REST API Backend
+
+For production deployments, use the FastAPI backend:
+
+```bash
+# Start the API server
+cd src
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+# Access API documentation
+# Open browser to: http://localhost:8000/docs
+```
+
+The REST API provides:
+- Professional endpoints for chat interactions
+- Health check and monitoring capabilities
+- Portfolio and order management endpoints
+- Human-in-the-loop approval workflows
+- OpenAPI/Swagger documentation at `/docs`
+
+**Key Endpoints:**
+- `GET /` - API information
+- `GET /health` - System health check
+- `POST /chat` - Chat with the multi-agent system
+- `POST /approve` - HITL approval for trading actions
+- `GET /portfolio/{user_id}` - Get user portfolio
+- `GET /orders/{user_id}` - Get user order history
+
+**Using API Mode in Streamlit:**
+1. Start the FastAPI server: `uvicorn src.api:app --reload`
+2. Launch Streamlit: `streamlit run streamlit_app.py`
+3. In the sidebar, select "API Mode (FastAPI Backend)"
+4. The app will automatically connect to the API at `http://localhost:8000`
 
 
 ## Multi-Agent Workflow
@@ -298,34 +380,135 @@ Database is automatically initialized at: `data/trading_orders.db`
 - **Timestamps**: ISO format with timezone information
 - **User IDs**: String identifiers for user isolation
 
-## Testing
+## Testing & Demos
 
-### Automated Test Suite
+The project provides two complementary testing approaches:
 
-The project includes comprehensive testing covering:
+### 1. Automated Testing (pytest)
+
+**Location:** `tests/` folder
+
+Production-ready automated test suite with comprehensive coverage:
 
 ```bash
-# Run all tests
-python test_agents.py
+# Run all automated tests
+pytest -v
 
-# Results: 8/8 tests should pass
-# - System Initialization
-# - Research Agent Functionality
-# - Portfolio Agent Operations
-# - Database Operations
-# - Human-in-the-Loop Safety
-# - Complete Trading Workflows
+# Run specific test categories
+pytest -m unit              # Unit tests only (fast)
+pytest -m integration       # Integration tests
+pytest -m llm              # LLM-dependent tests
+pytest -m guardrails       # Safety validation tests
+
+# Run with coverage report
+pytest --cov=src --cov-report=html
+open htmlcov/index.html  # View coverage report
 ```
 
-### Manual Testing
+**Test Coverage:**
+- ✅ **80+ automated test cases**
+- ✅ Unit tests for all components (`tests/unit_tests/`)
+- ✅ Integration tests for multi-agent workflows (`tests/integration_tests/`)
+- ✅ API endpoint tests (FastAPI)
+- ✅ Safety guardrails validation (Guardrails AI)
+- ✅ Database operations and persistence
+- ✅ Human-in-the-loop approval mechanisms
+
+**Test Organization:**
+```
+tests/
+├── conftest.py                 # Shared test fixtures
+├── unit_tests/                 # Component-level tests
+│   ├── test_tools.py
+│   ├── test_database_tools_comprehensive.py
+│   ├── test_guardrails.py
+│   └── ... (10+ test files)
+└── integration_tests/          # System-level tests
+    ├── test_graph.py           # Agent coordination tests
+    ├── test_api.py             # API endpoint tests
+    └── test_multi_agent_system.py
+```
+
+### 2. Interactive Demos (Manual Testing)
+
+**Location:** `demos/` folder
+
+Interactive demonstration scripts for manual exploration and validation:
 
 ```bash
-# Interactive testing mode
-python test_agents.py
-# Select option 2 for manual testing
+# Complete system demo (recommended starting point)
+python demos/demo_agents.py
 
-# Database-specific testing
-python test_database_agent.py
+# Specialized demos
+python demos/demo_database_agent.py    # Database operations
+python demos/demo_hitl_complete.py     # HITL mechanism
+python demos/demo_place_order_hitl.py  # Order placement workflow
+```
+
+**Demo Features:**
+- 🎯 **Interactive menus** with guided workflows
+- 🧪 **8 automated test scenarios** (research, trading, database, HITL)
+- 💬 **Live query mode** for custom testing
+- 🚨 **HITL approval demonstrations**
+- 📊 **Real-time agent coordination visualization**
+
+**Available Demo Scripts:**
+
+1. **demo_agents.py** - Complete System Demo
+   - System initialization testing
+   - All agent functionality (Research, Portfolio, Database)
+   - Human-in-the-loop workflows
+   - Interactive query mode
+   - Full investment scenario testing
+
+2. **demo_database_agent.py** - Database Operations
+   - Database statistics and health checks
+   - Order insertion and retrieval
+   - Portfolio position management
+   - Database agent integration
+
+3. **demo_hitl_complete.py** - HITL Mechanism
+   - Trading request with approval interrupts
+   - Interrupt detection demonstration
+   - Approval/rejection workflows
+   - Command resume functionality
+
+4. **demo_place_order_hitl.py** - Order Placement Safety
+   - Mock order scenarios
+   - Risky tools interception
+   - Human approval simulation
+   - Order execution workflow
+
+**See `demos/README.md` for complete demo documentation.**
+
+### Testing Best Practices
+
+**For Development:**
+```bash
+# Quick validation during development
+pytest -m unit -v                    # Fast unit tests only
+
+# Full validation before commits
+pytest -v                            # All automated tests
+
+# Interactive validation
+python demos/demo_agents.py          # Manual verification
+```
+
+**For CI/CD:**
+```bash
+# Comprehensive testing with coverage
+pytest --cov=src --cov-report=xml --cov-fail-under=70
+```
+
+**For Demonstrations:**
+```bash
+# Start with main demo for overview
+python demos/demo_agents.py
+
+# Show specific features
+python demos/demo_hitl_complete.py   # HITL safety
+python demos/demo_database_agent.py  # Data persistence
 ```
 
 ### Expected Test Results
@@ -403,8 +586,9 @@ python -c "from src.agent.database_tools import get_database_stats; print(get_da
 1. Fork the repository
 2. Create a feature branch
 3. Install development dependencies: `uv sync --dev`
-4. Run tests before submitting: `python test_agents.py`
-5. Submit pull request with test coverage
+4. Run tests before submitting: `pytest -v`
+5. Test interactively: `python demos/demo_agents.py`
+6. Submit pull request with test coverage
 
 ### Code Standards
 
@@ -431,9 +615,19 @@ If you use this project in academic work, please cite:
 }
 ```
 
-## Support
+## Support & Documentation
 
-- **Documentation**: See `publication/` directory for detailed technical documentation
+### 📚 Documentation
+
+- **Main Documentation**: This README (comprehensive technical guide)
+- **Quick Start**: [`Documentation/QUICK_START.md`](Documentation/QUICK_START.md) - Get running in 3 minutes
+- **Setup & Deployment Guide**: [`Documentation/SETUP.md`](Documentation/SETUP.md) - Production setup and deployment instructions
+- **Production Status**: [`Documentation/PRODUCTION_READY_SUMMARY.md`](Documentation/PRODUCTION_READY_SUMMARY.md) - Implementation overview
+- **Demo Scripts**: [`demos/README.md`](demos/README.md) - Interactive demo documentation
+- **Academic Publication**: `publication/` directory for research documentation
+
+### 💬 Getting Help
+
 - **Issues**: Report bugs and feature requests via GitHub Issues
 - **Discussions**: Join community discussions for usage questions
 - **Email**: Contact maintainers for enterprise inquiries
