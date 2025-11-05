@@ -163,9 +163,6 @@ def create_supervisor_highlevel():
         checkpointer=MemorySaver(),
         interrupt_before=[],  # Keep existing interrupt configuration
         interrupt_after=[],
-        # Add recursion limit to prevent infinite loops
-        # This limits the maximum depth of the graph execution
-        recursion_limit=100,  # Maximum 100 node executions per invocation
     )
     
     return supervisor
@@ -233,9 +230,6 @@ def create_supervisor_custom():
         checkpointer=MemorySaver(),
         interrupt_before=[],  # Keep existing interrupt configuration
         interrupt_after=[],
-        # Add recursion limit to prevent infinite loops
-        # This limits the maximum depth of the graph execution
-        recursion_limit=100,  # Maximum 100 node executions per invocation
     )
     
     return supervisor

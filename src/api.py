@@ -5,7 +5,7 @@ This module provides professional REST APIs for the multi-agent system,
 including health checks, agent interactions, and portfolio management.
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -278,12 +278,13 @@ async def chat(
         # Generate thread_id if not provided
         thread_id = request.thread_id or str(uuid.uuid4())
         
-        # Create configuration
+        # Create configuration with recursion limit
         config = {
             "configurable": {
                 "thread_id": thread_id,
                 "user_id": request.user_id
-            }
+            },
+            "recursion_limit": 100  # Maximum 100 node executions to prevent infinite loops
         }
         
         # Invoke supervisor
@@ -361,12 +362,13 @@ async def approve_action(
             details={"approved": request.approved, "thread_id": request.thread_id}
         )
         
-        # Create configuration
+        # Create configuration with recursion limit
         config = {
             "configurable": {
                 "thread_id": request.thread_id,
                 "user_id": request.user_id
-            }
+            },
+            "recursion_limit": 100  # Maximum 100 node executions to prevent infinite loops
         }
         
         # Resume with approval decision  

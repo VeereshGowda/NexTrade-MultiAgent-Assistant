@@ -361,7 +361,7 @@ result = circuit_breaker.call(risky_operation)
 
 **Files:**
 - ✅ `README.md` - Complete system documentation
-- ✅ `DEPLOYMENT.md` - Deployment guide with 4 options
+- ✅ `SETUP.md` - Setup and deployment guide with 4 options
 - ✅ `QUICK_START.md` - 3-minute setup guide
 - ✅ `PRODUCTION_READY_SUMMARY.md` - This file (status overview)
 
@@ -414,7 +414,7 @@ docker run -p 8000:8000 --env-file .env nextrade:latest
 
 ### Option 4: Azure App Service ☁️
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed Azure deployment instructions.
+See [SETUP.md](SETUP.md) for detailed Azure deployment instructions.
 
 ---
 
@@ -494,7 +494,7 @@ pytest -m guardrails       # Guardrails tests
 
 ### Documentation
 - `README.md` - Complete technical documentation
-- `DEPLOYMENT.md` - Deployment guide
+- `SETUP.md` - Setup and deployment guide
 - `QUICK_START.md` - Quick setup guide
 - `FASTAPI_FIX_GUIDE.md` - API troubleshooting
 
@@ -523,7 +523,7 @@ This is a **professional, production-ready multi-agent trading system** with:
 
 ## 📚 Next Steps
 
-1. **Deploy:** Choose your deployment option (see [DEPLOYMENT.md](DEPLOYMENT.md))
+1. **Deploy:** Choose your deployment option (see [SETUP.md](SETUP.md))
 2. **Monitor:** Enable LangSmith tracing for production monitoring
 3. **Scale:** Add load balancing and horizontal scaling as needed
 4. **Enhance:** Add custom agents or tools for specific use cases

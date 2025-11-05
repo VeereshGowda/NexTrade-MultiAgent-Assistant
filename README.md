@@ -59,7 +59,7 @@ AAIDC-Module2-MultiAgent/
 ├── Documentation/              # Supplementary documentation
 │   ├── README.md               # Documentation overview
 │   ├── QUICK_START.md          # 3-minute setup guide
-│   ├── DEPLOYMENT.md           # Production deployment guide
+│   ├── SETUP.md                # Production setup & deployment guide
 │   └── PRODUCTION_READY_SUMMARY.md # Implementation status
 ├── demos/                      # Interactive demo scripts
 │   ├── README.md               # Demo documentation
@@ -123,7 +123,7 @@ AAIDC-Module2-MultiAgent/
 - **`README.md`** - This file (comprehensive guide)
 - **`Documentation/`** - All supplementary documentation
   - **`QUICK_START.md`** - 3-minute setup guide
-  - **`DEPLOYMENT.md`** - Production deployment guide
+  - **`SETUP.md`** - Production setup and deployment guide
   - **`PRODUCTION_READY_SUMMARY.md`** - Implementation status
 - **`demos/README.md`** - Demo scripts documentation
 
@@ -621,7 +621,7 @@ If you use this project in academic work, please cite:
 
 - **Main Documentation**: This README (comprehensive technical guide)
 - **Quick Start**: [`Documentation/QUICK_START.md`](Documentation/QUICK_START.md) - Get running in 3 minutes
-- **Deployment Guide**: [`Documentation/DEPLOYMENT.md`](Documentation/DEPLOYMENT.md) - Production deployment instructions
+- **Setup & Deployment Guide**: [`Documentation/SETUP.md`](Documentation/SETUP.md) - Production setup and deployment instructions
 - **Production Status**: [`Documentation/PRODUCTION_READY_SUMMARY.md`](Documentation/PRODUCTION_READY_SUMMARY.md) - Implementation overview
 - **Demo Scripts**: [`demos/README.md`](demos/README.md) - Interactive demo documentation
 - **Academic Publication**: `publication/` directory for research documentation

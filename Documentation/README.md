@@ -19,7 +19,7 @@ Get up and running in 3 minutes.
 
 ---
 
-### 2. **DEPLOYMENT.md** - Production Deployment Guide
+### 2. **SETUP.md** - Production Setup & Deployment Guide
 Comprehensive guide for deploying to production.
 
 **Contents:**
@@ -40,7 +40,7 @@ Comprehensive guide for deploying to production.
 
 ---
 
-### 3. **PRODUCTION_READY_SUMMARY.md** - Implementation Status
+### 3. **PRODUCTION_READY.md** - Implementation Status
 Executive summary of production readiness.
 
 **Contents:**
@@ -60,10 +60,10 @@ Executive summary of production readiness.
 **For New Users:**
 1. Start with **[QUICK_START.md](QUICK_START.md)** - Get running in 3 minutes
 2. Review **[PRODUCTION_READY_SUMMARY.md](PRODUCTION_READY_SUMMARY.md)** - See what's available
-3. Check **[DEPLOYMENT.md](DEPLOYMENT.md)** - When ready for production
+3. Check **[SETUP.md](SETUP.md)** - When ready for production
 
 **For Production Deployment:**
-1. **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
+1. **[SETUP.md](SETUP.md)** - Complete setup and deployment guide
 2. **[PRODUCTION_READY_SUMMARY.md](PRODUCTION_READY_SUMMARY.md)** - Verify readiness
 
 **For Quick Reference:**
@@ -82,7 +82,7 @@ Root Level
 ├── Documentation/                      ← You are here
 │   ├── README.md                       ← This file
 │   ├── QUICK_START.md                  ← 3-minute setup
-│   ├── DEPLOYMENT.md                   ← Production deployment
+│   ├── SETUP.md                        ← Production setup & deployment
 │   └── PRODUCTION_READY_SUMMARY.md     ← Status overview
 │
 └── demos/
@@ -109,7 +109,7 @@ Root Level
 
 **November 4, 2025:**
 - Created QUICK_START.md (streamlined)
-- Updated DEPLOYMENT.md (condensed)
+- Updated SETUP.md (condensed)
 - Rewrote PRODUCTION_READY_SUMMARY.md (concise)
 - Organized demo scripts into `demos/` folder
 

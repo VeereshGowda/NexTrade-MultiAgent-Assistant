@@ -1124,7 +1124,7 @@ Get-Content compliance.log -Tail 50
 ### Deployment Questions
 
 **Q: Can I deploy to Heroku/AWS/Azure?**  
-**A:** Yes! See `DEPLOYMENT.md` for detailed instructions. The system is cloud-agnostic and supports:
+**A:** Yes! See `SETUP.md` for detailed instructions. The system is cloud-agnostic and supports:
 - Azure App Service
 - AWS Elastic Beanstalk
 - Google Cloud Run
@@ -1281,7 +1281,7 @@ streamlit run streamlit_app.py
 
 1. **Documentation**
    - [README.md](../README.md) - Complete system documentation
-   - [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
+   - [SETUP.md](SETUP.md) - Setup and deployment guide
    - [QUICK_START.md](QUICK_START.md) - Quick setup guide
    - [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - API reference
    - [MONITORING.md](MONITORING.md) - Monitoring and maintenance

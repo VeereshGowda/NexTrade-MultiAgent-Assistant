@@ -135,12 +135,13 @@ def approve_action_via_api(thread_id: str, approved: bool, user_id: str) -> Dict
 def process_message(supervisor, prompt, user_id, thread_id):
     """Process a message through the supervisor and return the response."""
     try:
-        # Create configuration
+        # Create configuration with recursion limit
         config = {
             "configurable": {
                 "thread_id": thread_id,
                 "user_id": user_id
-            }
+            },
+            "recursion_limit": 100  # Maximum 100 node executions to prevent infinite loops
         }
         
         # Initialize state with loop tracking
@@ -574,12 +575,13 @@ def main():
                                     })
                             else:
                                 # Direct mode - use supervisor
-                                # Create configuration
+                                # Create configuration with recursion limit
                                 config = {
                                     "configurable": {
                                         "thread_id": st.session_state.thread_id,
                                         "user_id": st.session_state.user_id
-                                    }
+                                    },
+                                    "recursion_limit": 100  # Maximum 100 node executions
                                 }
                                 
                                 # Get response from supervisor

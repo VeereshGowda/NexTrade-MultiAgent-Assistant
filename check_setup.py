@@ -91,9 +91,13 @@ def test_imports():
         ("langchain_tavily", "LangChain Tavily"),
         ("langgraph", "LangGraph"),
         ("streamlit", "Streamlit"),
+        ("fastapi", "FastAPI"),
+        ("uvicorn", "Uvicorn"),
+        ("pydantic", "Pydantic"),
         ("yfinance", "Yahoo Finance"),
         ("requests", "Requests"),
-        ("dotenv", "Python-dotenv")
+        ("dotenv", "Python-dotenv"),
+        ("pytest", "Pytest")
     ]
     
     all_imported = True
@@ -110,16 +114,97 @@ def test_imports():
         print("\n✅ All packages imported successfully!")
     else:
         print("\n❌ Some packages are missing. Install them with:")
-        print("   pip install -r requirements.txt")
+        print("   uv pip install -e .")
         
     return all_imported
+
+def check_project_structure():
+    """Check if key project files and directories exist."""
+    print("\n📁 Checking Project Structure...")
+    print("=" * 40)
+    
+    required_items = [
+        ("src/agent/graph.py", "Multi-agent supervisor"),
+        ("src/agent/tools.py", "Agent tools"),
+        ("src/agent/database_tools.py", "Database tools"),
+        ("src/api.py", "FastAPI backend"),
+        ("streamlit_app.py", "Streamlit UI"),
+        ("data", "Data directory"),
+        ("tests", "Test directory"),
+        (".env", "Environment configuration")
+    ]
+    
+    all_exist = True
+    
+    for item, description in required_items:
+        exists = os.path.exists(item) or os.path.isdir(item)
+        if exists:
+            print(f"✅ {description}: Found")
+        else:
+            print(f"❌ {description}: Missing ({item})")
+            all_exist = False
+    
+    if all_exist:
+        print("\n✅ Project structure looks good!")
+    else:
+        print("\n❌ Some required files are missing.")
+        
+    return all_exist
+
+def check_database():
+    """Check if database can be accessed."""
+    print("\n🗄️ Checking Database...")
+    print("=" * 40)
+    
+    try:
+        import sqlite3
+        db_path = "data/trading_orders.db"
+        
+        if os.path.exists(db_path):
+            print(f"✅ Database file exists: {db_path}")
+            
+            # Try to connect
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Check if orders table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'")
+            if cursor.fetchone():
+                print("✅ Database schema initialized")
+            else:
+                print("⚪ Database exists but schema not initialized (will auto-create)")
+            
+            conn.close()
+            return True
+        else:
+            print(f"⚪ Database will be created on first run: {db_path}")
+            return True
+            
+    except Exception as e:
+        print(f"❌ Database check failed: {e}")
+        return False
 
 if __name__ == "__main__":
     print("🔧 Multi-Agent System Environment Check")
     print("=" * 50)
     
+    # Check if running in virtual environment
+    import sys
+    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+        print("✅ Virtual environment is active")
+    else:
+        print("⚠️  WARNING: Virtual environment is NOT active!")
+        print("   Please activate it first:")
+        print("   Windows: .venv\\Scripts\\activate")
+        print("   Linux/Mac: source .venv/bin/activate")
+        print("")
+    
+    print("=" * 50)
+    
     env_ok = check_environment()
     imports_ok = test_imports()
+    structure_ok = check_project_structure()
+    db_ok = check_database()
     
     print("\n" + "=" * 50)
     print("📊 ENVIRONMENT SUMMARY:")
@@ -127,11 +212,23 @@ if __name__ == "__main__":
     
     print(f"Environment Variables: {'✅ OK' if env_ok else '❌ ISSUES'}")
     print(f"Package Imports: {'✅ OK' if imports_ok else '❌ ISSUES'}")
+    print(f"Project Structure: {'✅ OK' if structure_ok else '❌ ISSUES'}")
+    print(f"Database: {'✅ OK' if db_ok else '❌ ISSUES'}")
     
-    if env_ok and imports_ok:
-        print("\n🎉 Everything looks good! You're ready to test.")
-        print("\nNext steps:")
-        print("1. Run: python test_agents.py")
-        print("2. Or run: streamlit run streamlit_app.py")
+    if env_ok and imports_ok and structure_ok and db_ok:
+        print("\n🎉 Everything looks good! You're ready to start.")
+        print("\nNext steps (ensure virtual environment is active):")
+        print("1. Direct Mode: streamlit run streamlit_app.py")
+        print("2. API Mode:")
+        print("   - Terminal 1: cd src && python -m uvicorn api:app --reload")
+        print("   - Terminal 2: streamlit run streamlit_app.py")
+        print("3. Run tests: pytest -v")
     else:
-        print("\n⚠️ Please fix the issues above before testing.")
+        print("\n⚠️ Please fix the issues above before starting.")
+        print("\n💡 Common fixes:")
+        print("1. Activate virtual environment:")
+        print("   Windows: .venv\\Scripts\\activate")
+        print("   Linux/Mac: source .venv/bin/activate")
+        print("2. Install dependencies: uv pip install -e .")
+        print("3. Create .env file: cp .env.example .env")
+        print("4. Add your API keys to .env")

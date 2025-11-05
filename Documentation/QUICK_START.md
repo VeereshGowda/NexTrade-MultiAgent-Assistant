@@ -186,7 +186,7 @@ streamlit run streamlit_app.py
 ## 📚 Next Steps
 
 - 📖 **Full Documentation:** See [README.md](README.md)
-- 🚀 **Deployment Guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
+- 🚀 **Setup & Deployment Guide:** See [SETUP.md](SETUP.md)
 - 📊 **Production Status:** See [PRODUCTION_READY_SUMMARY.md](PRODUCTION_READY_SUMMARY.md)
 - 🔍 **API Troubleshooting:** See [FASTAPI_FIX_GUIDE.md](FASTAPI_FIX_GUIDE.md)
 
