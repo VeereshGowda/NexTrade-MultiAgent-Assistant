@@ -143,10 +143,31 @@ def process_message(supervisor, prompt, user_id, thread_id):
             }
         }
         
+        # Initialize state with loop tracking
+        input_data = {
+            "messages": [HumanMessage(content=prompt)],
+            "iteration_count": 0,
+            "agent_call_history": [],
+            "start_timestamp": datetime.now().timestamp(),
+            "loop_detected": False
+        }
+        
         # Get response from supervisor
-        response = supervisor.invoke({
-            "messages": [HumanMessage(content=prompt)]
-        }, config)
+        response = supervisor.invoke(input_data, config)
+        
+        # Check for loop detection
+        if response.get("loop_detected", False):
+            return {
+                "type": "error",
+                "error": "Loop detected - execution stopped to prevent infinite loop",
+                "error_type": "LoopDetectionError",
+                "troubleshooting": f"The system made {response.get('iteration_count', 0)} iterations. Try simplifying your request.",
+                "statistics": {
+                    "iterations": response.get("iteration_count", 0),
+                    "execution_time": response.get("execution_time", 0),
+                    "agent_sequence": " -> ".join(response.get("agent_call_history", []))
+                }
+            }
         
         # Check for interrupt (HITL approval needed)
         if "__interrupt__" in response:
@@ -510,7 +531,11 @@ def main():
                 
                 # Generate response
                 with st.chat_message("assistant"):
-                    with st.spinner("🤖 Processing..."):
+                    # Create status placeholder for progress updates
+                    status_placeholder = st.empty()
+                    progress_placeholder = st.empty()
+                    
+                    with st.spinner("🤖 Processing your request..."):
                         try:
                             if use_api_mode:
                                 # Use API endpoint
@@ -600,12 +625,32 @@ def main():
                             st.error(f"- Error Type: {type(e).__name__}")
                             st.error(f"- Error Details: {str(e)}")
                             
+                            # Check for loop detection error
+                            if "LoopDetectionError" in type(e).__name__ or "loop" in str(e).lower():
+                                st.error("**⚠️ Loop Detection:**")
+                                st.error("The system detected a potential infinite loop and stopped execution.")
+                                st.error("This usually means agents are calling each other repeatedly without making progress.")
+                                st.info("💡 **Try these solutions:**")
+                                st.info("• Break your request into smaller, more specific tasks")
+                                st.info("• Rephrase your question more clearly")
+                                st.info("• Check if the request requires information that's not available")
+                            
                             # Check if this is a tool-related error
-                            if "tool" in str(e).lower():
-                                st.error("This appears to be a tool-related error. Common causes:")
+                            elif "tool" in str(e).lower():
+                                st.error("**This appears to be a tool-related error. Common causes:**")
                                 st.error("- Model provider not supporting the requested tools")
-                                st.error("- Try switching to Azure OpenAI in the sidebar")
-                                st.error("- Check that all API keys are correctly set in .env file")
+                                st.info("💡 **Try these solutions:**")
+                                st.info("• Switch to Azure OpenAI in the sidebar")
+                                st.info("• Check that all API keys are correctly set in .env file")
+                            
+                            # Check for recursion error
+                            elif "recursion" in str(e).lower():
+                                st.error("**⚠️ Recursion Limit Reached:**")
+                                st.error("The system exceeded the maximum recursion depth.")
+                                st.info("💡 **Try these solutions:**")
+                                st.info("• Simplify your request")
+                                st.info("• Break complex tasks into steps")
+                                st.info("• Clear your conversation history (refresh page)")
                             
                             st.session_state.messages.append({
                                 "role": "assistant", 

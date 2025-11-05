@@ -56,6 +56,11 @@ AAIDC-Module2-MultiAgent/
 ├── streamlit_app.py            # Web interface application
 ├── check_setup.py              # Environment verification
 ├── Makefile                    # Build automation
+├── Documentation/              # Supplementary documentation
+│   ├── README.md               # Documentation overview
+│   ├── QUICK_START.md          # 3-minute setup guide
+│   ├── DEPLOYMENT.md           # Production deployment guide
+│   └── PRODUCTION_READY_SUMMARY.md # Implementation status
 ├── demos/                      # Interactive demo scripts
 │   ├── README.md               # Demo documentation
 │   ├── demo_agents.py          # Complete system demo
@@ -116,9 +121,10 @@ AAIDC-Module2-MultiAgent/
 
 **Documentation Files:**
 - **`README.md`** - This file (comprehensive guide)
-- **`QUICK_START.md`** - 3-minute setup guide
-- **`DEPLOYMENT.md`** - Production deployment guide
-- **`PRODUCTION_READY_SUMMARY.md`** - Implementation status
+- **`Documentation/`** - All supplementary documentation
+  - **`QUICK_START.md`** - 3-minute setup guide
+  - **`DEPLOYMENT.md`** - Production deployment guide
+  - **`PRODUCTION_READY_SUMMARY.md`** - Implementation status
 - **`demos/README.md`** - Demo scripts documentation
 
 ### 1. Clone the Repository
@@ -609,9 +615,19 @@ If you use this project in academic work, please cite:
 }
 ```
 
-## Support
+## Support & Documentation
 
-- **Documentation**: See `publication/` directory for detailed technical documentation
+### 📚 Documentation
+
+- **Main Documentation**: This README (comprehensive technical guide)
+- **Quick Start**: [`Documentation/QUICK_START.md`](Documentation/QUICK_START.md) - Get running in 3 minutes
+- **Deployment Guide**: [`Documentation/DEPLOYMENT.md`](Documentation/DEPLOYMENT.md) - Production deployment instructions
+- **Production Status**: [`Documentation/PRODUCTION_READY_SUMMARY.md`](Documentation/PRODUCTION_READY_SUMMARY.md) - Implementation overview
+- **Demo Scripts**: [`demos/README.md`](demos/README.md) - Interactive demo documentation
+- **Academic Publication**: `publication/` directory for research documentation
+
+### 💬 Getting Help
+
 - **Issues**: Report bugs and feature requests via GitHub Issues
 - **Discussions**: Join community discussions for usage questions
 - **Email**: Contact maintainers for enterprise inquiries

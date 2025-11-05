@@ -44,13 +44,16 @@ from .database_tools import (
     get_trade_history
 )
 from .utils import create_handoff_tool, save_graph_image
-from .state import SupervisorState
+from .state import SupervisorState, LoopDetector, get_initial_state
 
 # Load environment variables
 load_dotenv()
 
 # Global flag for model preference
 _use_azure_model = True
+
+# Loop detector for safety
+_loop_detector = LoopDetector(max_iterations=50, pattern_window=10)
 
 
 def get_llm(model_name: str = "gpt-4o", use_azure: bool = None):
@@ -156,7 +159,14 @@ def create_supervisor_highlevel():
         version="v2",
         output_mode="full_history",
         store=get_global_store(),
-    ).compile(checkpointer=MemorySaver())
+    ).compile(
+        checkpointer=MemorySaver(),
+        interrupt_before=[],  # Keep existing interrupt configuration
+        interrupt_after=[],
+        # Add recursion limit to prevent infinite loops
+        # This limits the maximum depth of the graph execution
+        recursion_limit=100,  # Maximum 100 node executions per invocation
+    )
     
     return supervisor
 
@@ -219,7 +229,14 @@ def create_supervisor_custom():
     builder.add_edge("database", "supervisor")
     
     # Compile with checkpointer
-    supervisor = builder.compile(checkpointer=MemorySaver())
+    supervisor = builder.compile(
+        checkpointer=MemorySaver(),
+        interrupt_before=[],  # Keep existing interrupt configuration
+        interrupt_after=[],
+        # Add recursion limit to prevent infinite loops
+        # This limits the maximum depth of the graph execution
+        recursion_limit=100,  # Maximum 100 node executions per invocation
+    )
     
     return supervisor
 

@@ -549,7 +549,6 @@ uv pip install --upgrade langchain
 
 - **Quick Start:** [QUICK_START.md](QUICK_START.md) - 3-minute setup guide
 - **Production Summary:** [PRODUCTION_READY_SUMMARY.md](PRODUCTION_READY_SUMMARY.md) - Implementation status
-- **API Fix Guide:** [FASTAPI_FIX_GUIDE.md](FASTAPI_FIX_GUIDE.md) - API troubleshooting
 - **Full Documentation:** [README.md](README.md) - Complete technical details
 
 ---
