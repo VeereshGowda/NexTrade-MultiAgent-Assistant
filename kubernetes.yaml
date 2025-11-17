@@ -1,0 +1,286 @@
+# Kubernetes Deployment Configuration
+# For deploying NexTrade to Kubernetes clusters
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextrade
+  labels:
+    app: nextrade
+    environment: production
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextrade-config
+  namespace: nextrade
+data:
+  OPENAI_API_VERSION: "2024-12-01-preview"
+  AZURE_OPENAI_DEPLOYMENT_NAME: "gpt-4o"
+  DATABASE_PATH: "/app/data/trading_orders.db"
+  LOG_LEVEL: "INFO"
+  LANGSMITH_TRACING: "true"
+  LANGSMITH_PROJECT: "nextrade-production"
+
+---
+# Secret for API keys (create separately with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextrade-secrets
+  namespace: nextrade
+type: Opaque
+stringData:
+  AZURE_OPENAI_API_KEY: "your-azure-api-key-here"
+  AZURE_OPENAI_ENDPOINT: "https://your-resource.openai.azure.com"
+  TAVILY_API_KEY: "your-tavily-key-here"
+  ALPHAVANTAGE_API_KEY: "your-alphavantage-key-here"
+  LANGSMITH_API_KEY: "your-langsmith-key-here"
+  GROQ_API_KEY: "your-groq-key-here"
+
+---
+# Persistent Volume Claim for data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextrade-data-pvc
+  namespace: nextrade
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextrade-api
+  namespace: nextrade
+  labels:
+    app: nextrade
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nextrade
+      component: api
+  template:
+    metadata:
+      labels:
+        app: nextrade
+        component: api
+    spec:
+      containers:
+      - name: api
+        image: nextrade:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        envFrom:
+        - configMapRef:
+            name: nextrade-config
+        - secretRef:
+            name: nextrade-secrets
+        command: [".venv/bin/uvicorn"]
+        args: ["src.api:app", "--host", "0.0.0.0", "--port", "8000"]
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: nextrade-data-pvc
+      - name: logs
+        emptyDir: {}
+
+---
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextrade-api-service
+  namespace: nextrade
+  labels:
+    app: nextrade
+    component: api
+spec:
+  type: ClusterIP
+  selector:
+    app: nextrade
+    component: api
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+
+---
+# UI Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextrade-ui
+  namespace: nextrade
+  labels:
+    app: nextrade
+    component: ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nextrade
+      component: ui
+  template:
+    metadata:
+      labels:
+        app: nextrade
+        component: ui
+    spec:
+      containers:
+      - name: ui
+        image: nextrade:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8501
+          name: http
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: API_BASE_URL
+          value: "http://nextrade-api-service:8000"
+        envFrom:
+        - configMapRef:
+            name: nextrade-config
+        - secretRef:
+            name: nextrade-secrets
+        command: [".venv/bin/streamlit"]
+        args: ["run", "streamlit_app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8501
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: nextrade-data-pvc
+      - name: logs
+        emptyDir: {}
+
+---
+# UI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextrade-ui-service
+  namespace: nextrade
+  labels:
+    app: nextrade
+    component: ui
+spec:
+  type: LoadBalancer
+  selector:
+    app: nextrade
+    component: ui
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8501
+    protocol: TCP
+
+---
+# Ingress (optional - requires Ingress controller)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextrade-ingress
+  namespace: nextrade
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - nextrade.yourdomain.com
+    - api.nextrade.yourdomain.com
+    secretName: nextrade-tls
+  rules:
+  - host: nextrade.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nextrade-ui-service
+            port:
+              number: 80
+  - host: api.nextrade.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nextrade-api-service
+            port:
+              number: 8000

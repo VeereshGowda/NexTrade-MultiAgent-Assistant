@@ -5,6 +5,10 @@ A sophisticated multi-agent system that automates and optimizes stock market tra
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-green.svg)](https://github.com/langchain-ai/langgraph)
+[![Production Ready](https://img.shields.io/badge/Production-Ready-brightgreen.svg)](Documentation/PRODUCTION_READY.md)
+
+> **⚖️ License:** MIT License | **👤 Author:** Veeresh Gowda  
+> **📄 Full License Details:** See [LICENSE](LICENSE) and [LICENSING_AND_DEPLOYMENT.md](Documentation/LICENSING_AND_DEPLOYMENT.md)
 
 ## Overview
 
@@ -598,22 +602,53 @@ python -c "from src.agent.database_tools import get_database_stats; print(get_da
 - Maintain test coverage above 90%
 - Update documentation for new features
 
-## License
+## ⚖️ License and Usage Rights
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### License
 
-## Citation
+**NexTrade Multi-Agent Trading System** is licensed under the **MIT License**.
 
-If you use this project in academic work, please cite:
+**Copyright (c) 2025 Veeresh Gowda**
 
-```bibtex
-@software{nextrade2025,
-  title={NexTrade: Multi-Agent Trading System for Intelligent Stock Market Operations},
-  author={AAIDC Module 2 Team},
-  year={2025},
-  url={https://github.com/your-repo/nextrade}
-}
-```
+This means you are free to:
+- ✅ **Use** commercially and privately
+- ✅ **Modify** the source code
+- ✅ **Distribute** original or modified versions
+- ✅ **Sublicense** and incorporate into proprietary software
+
+**Requirements:**
+- 📋 Include original copyright and license notice
+- 📋 Provide attribution when redistributing
+
+**Full License:** See [LICENSE](LICENSE) file  
+**Detailed Usage Rights:** See [LICENSING_AND_DEPLOYMENT.md](Documentation/LICENSING_AND_DEPLOYMENT.md)
+
+### Important Disclaimers
+
+#### ⚠️ Financial Trading Disclaimer
+
+**This software is designed for educational and research purposes.**
+
+- Does **NOT** provide financial advice
+- Does **NOT** guarantee trading profits
+- Should **NOT** be the sole basis for trading decisions
+- Requires human approval for all trades (HITL)
+
+**You are responsible for:**
+- Verifying all trading decisions
+- Understanding market risks
+- Complying with financial regulations
+- Obtaining necessary trading licenses
+
+#### 🔐 API Keys Required
+
+You must obtain your own API keys:
+- **Azure OpenAI**: Primary LLM (not included)
+- **Tavily API**: Web search (not included)
+- **Alpha Vantage**: Stock data (not included)
+
+Each service has its own terms and costs.
+
 
 ## Support & Documentation
 
@@ -622,19 +657,25 @@ If you use this project in academic work, please cite:
 - **Main Documentation**: This README (comprehensive technical guide)
 - **Quick Start**: [`Documentation/QUICK_START.md`](Documentation/QUICK_START.md) - Get running in 3 minutes
 - **Setup & Deployment Guide**: [`Documentation/SETUP.md`](Documentation/SETUP.md) - Production setup and deployment instructions
+- **Licensing & Deployment**: [`Documentation/LICENSING_AND_DEPLOYMENT.md`](Documentation/LICENSING_AND_DEPLOYMENT.md) - Complete licensing and usage rights
 - **Production Status**: [`Documentation/PRODUCTION_READY_SUMMARY.md`](Documentation/PRODUCTION_READY_SUMMARY.md) - Implementation overview
 - **Demo Scripts**: [`demos/README.md`](demos/README.md) - Interactive demo documentation
 - **Academic Publication**: `publication/` directory for research documentation
 
 ### 💬 Getting Help
 
-- **Issues**: Report bugs and feature requests via GitHub Issues
-- **Discussions**: Join community discussions for usage questions
-- **Email**: Contact maintainers for enterprise inquiries
+- **Issues**: Report bugs and feature requests via [GitHub Issues](https://github.com/VeereshGowda/NexTrade-MultiAgent-Assistant/issues)
+- **Discussions**: Join community discussions via [GitHub Discussions](https://github.com/VeereshGowda/NexTrade-MultiAgent-Assistant/discussions)
 
 ## Acknowledgments
 
-- Built with [LangGraph](https://github.com/langchain-ai/langgraph) and [LangChain](https://github.com/langchain-ai/langchain)
-- Inspired by modern multi-agent system research
-- Thanks to the open-source AI community for foundational tools
+Built with excellent open-source projects:
+- [LangGraph](https://github.com/langchain-ai/langgraph) - Agent orchestration framework
+- [LangChain](https://github.com/langchain-ai/langchain) - LLM application framework
+- [Streamlit](https://streamlit.io/) - Web interface
+- [FastAPI](https://fastapi.tiangolo.com/) - REST API framework
+- [Guardrails AI](https://www.guardrailsai.com/) - Safety and compliance
+
+Special thanks to the open-source community.
+
 

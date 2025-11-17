@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2024 LangChain
+Copyright (c) 2025 Veeresh Gowda (NexTrade Multi-Agent Trading System)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,62 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Third-Party Dependencies
+
+This project incorporates or depends on the following third-party libraries:
+
+- **LangChain/LangGraph**: MIT License
+- **Streamlit**: Apache License 2.0
+- **FastAPI**: MIT License
+- **OpenAI/Azure OpenAI**: Subject to OpenAI API Terms
+- **Guardrails AI**: Apache License 2.0
+- **Other dependencies**: See pyproject.toml for full list
+
+---
+
+## Usage Rights and Restrictions
+
+### Permitted Use
+
+✅ **Commercial Use**: You may use this software for commercial purposes
+✅ **Modification**: You may modify and adapt the software
+✅ **Distribution**: You may distribute the software
+✅ **Private Use**: You may use the software privately
+✅ **Educational Use**: You may use the software for learning and research
+
+### Requirements
+
+📋 **License Notice**: Include this license and copyright notice in all copies
+📋 **Attribution**: Credit the original author (Veeresh Gowda) when redistributing
+
+### Restrictions
+
+⚠️ **API Keys**: Users must obtain their own API keys (Azure OpenAI, Tavily, etc.)
+⚠️ **Trading Risk**: This software is for educational/research purposes. Use at your own risk
+⚠️ **No Warranty**: Software is provided "as is" without warranty of any kind
+⚠️ **Liability**: Authors are not liable for any damages arising from use
+
+### Financial Trading Disclaimer
+
+🚨 **IMPORTANT**: This software is designed for educational and research purposes. 
+Stock trading involves substantial risk of loss. This software:
+
+- Does NOT provide financial advice
+- Does NOT guarantee trading profits
+- Should NOT be used as the sole basis for trading decisions
+- Requires human approval for all trades (Human-in-the-Loop)
+
+Users are responsible for:
+- Obtaining necessary licenses/permissions for any further development of this application
+
+---
+
+## Contact & Support
+
+**Project**: NexTrade Multi-Agent Trading System  
+**Author**: Veeresh Gowda  
+**Repository**: https://github.com/VeereshGowda/NexTrade-MultiAgent-Assistant  
+
