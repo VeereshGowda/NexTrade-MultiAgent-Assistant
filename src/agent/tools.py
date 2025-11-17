@@ -152,6 +152,7 @@ def lookup_stock_symbol(company_name: str) -> dict:
             "netflix": ("NFLX", "Netflix, Inc."),
             "openai": ("MSFT", "Microsoft Corporation"),  # OpenAI is closely tied to Microsoft
             "anthropic": ("GOOGL", "Alphabet Inc."),  # Anthropic has Google investment
+            "next era energy": ("NEE", "NextEra Energy, Inc."),
         }
         
         company_lower = company_name.lower()
